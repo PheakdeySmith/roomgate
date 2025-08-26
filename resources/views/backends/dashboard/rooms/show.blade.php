@@ -182,10 +182,15 @@
                                         <tr>
                                             <td>Base Rent</td>
                                             <td class="text-end fw-semibold">
-                                                @if(isset($activeContract->rent_amount))
-                                                    {!! format_money($activeContract->rent_amount) !!}
-                                                @elseif(isset($room->roomType->base_price))
-                                                    {!! format_money($room->roomType->base_price) !!}
+                                                {{-- Check for a specific rent amount from an active contract first --}}
+                                                @if (isset($room->activeContract->rent_amount))
+                                                    {!! format_money($room->activeContract->rent_amount) !!}
+
+                                                    {{-- Otherwise, check if the $basePrice object was found for this room --}}
+                                                @elseif($basePrice)
+                                                    {!! format_money($basePrice->price) !!}
+
+                                                    {{-- If no contract or base price exists, show 0 --}}
                                                 @else
                                                     {!! format_money(0) !!}
                                                 @endif

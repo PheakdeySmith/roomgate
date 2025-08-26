@@ -6,6 +6,7 @@ use App\Models\Room;
 use App\Models\Amenity;
 use App\Models\Property;
 use App\Models\RoomType;
+use App\Models\BasePrice;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -71,27 +72,34 @@ class RoomController extends Controller
 
     public function show(Room $room)
     {
-        // 1. Authorization: Ensure the landlord owns this room.
+        // 1. Authorization & pre-loading property
+        $room->load('property');
         if ($room->property->landlord_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
 
-        // 2. Eager-load all relationships for efficiency.
+        // 2. Eager-load all other necessary relationships
         $room->load([
-            'property',
             'roomType',
             'amenities',
+            'activeContract.tenant',
             'contracts' => function ($query) {
-                // Load all contracts for this room, and for each contract, load the tenant.
                 $query->with('tenant')->orderBy('start_date', 'desc');
             }
         ]);
 
-        // 3. Find the currently active contract for this room, if one exists.
-        $activeContract = $room->contracts->where('status', 'active')->first();
+        // --- NEW LOGIC STARTS HERE ---
 
-        // 4. Pass all the data to the view.
-        return view('backends.dashboard.rooms.show', compact('room', 'activeContract'));
+        // 3. Fetch the specific base price for this room
+        $basePrice = BasePrice::where('property_id', $room->property_id)
+            ->where('room_type_id', $room->room_type_id)
+            ->first();
+
+        // --- NEW LOGIC ENDS HERE ---
+
+
+        // 4. Pass the room and its base price to the view
+        return view('backends.dashboard.rooms.show', compact('room', 'basePrice'));
     }
 
     public function store(Request $request)
