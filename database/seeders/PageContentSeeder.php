@@ -95,7 +95,27 @@ class PageContentSeeder extends Seeder
                 'key' => 'terms-and-conditions',
                 'title' => 'Terms & Conditions',
                 'subtitle' => '/ Terms',
-                'content' => '<h2>Use of Services</h2>\n<p>You may use RoomGate only in compliance with these Terms and all applicable laws. You are responsible for any activity that occurs under your account.</p>\n<h3>Account Registration</h3>\n<p>You must provide accurate and complete information when creating an account. You’re responsible for maintaining the confidentiality of your login credentials.</p>\n<p>RoomGate offers paid plans with monthly or annual billing. By subscribing, you authorize us to charge your payment method on a recurring basis until cancellation.</p>\n<p>All payments are non-refundable except as required by law. You can cancel your plan at any time from your account settings.</p>\n<h3>User Data</h3>\n<p>We do not own your data. By using RoomGate, you grant us a license to store, process, and transmit data solely to provide the service.</p>\n<h3>Prohibited Conduct</h3>\n<p><strong>You agree not to:</strong></p>\n<ul role="list">\n    <li>Use the service for any unlawful or harmful purpose</li>\n    <li>Use the service for any unlawful or harmful purpose</li>\n    <li>Reverse engineer or copy any part of our product</li>\n</ul>\n<h3>Termination</h3>\n<p>We reserve the right to suspend or terminate your account if you breach these Terms or misuse the service. Upon termination, your access will be revoked, and data may be deleted after 30 days.</p>\n<p>We may update these Terms occasionally. If changes are material, we’ll notify you via email or platform alert. Continued use after changes means you accept the new Terms.</p>\n<h3>Limitation of Liability</h3>\n<p>To the maximum extent permitted by law, RoomGate and its affiliates shall not be liable for any indirect, incidental, or consequential damages arising from your use of the platform.</p>\n<p>These Terms are governed by and construed under the laws of the State of California, without regard to its conflict of law principles.</p>',
+                'content' => '<h2>Use of Services</h2>
+<p>You may use RoomGate only in compliance with these Terms and all applicable laws. You are responsible for any activity that occurs under your account.</p>
+<h3>Account Registration</h3>
+<p>You must provide accurate and complete information when creating an account. You’re responsible for maintaining the confidentiality of your login credentials.</p>
+<p>RoomGate offers paid plans with monthly or annual billing. By subscribing, you authorize us to charge your payment method on a recurring basis until cancellation.</p>
+<p>All payments are non-refundable except as required by law. You can cancel your plan at any time from your account settings.</p>
+<h3>User Data</h3>
+<p>We do not own your data. By using RoomGate, you grant us a license to store, process, and transmit data solely to provide the service.</p>
+<h3>Prohibited Conduct</h3>
+<p><strong>You agree not to:</strong></p>
+<ul role="list">
+    <li>Use the service for any unlawful or harmful purpose</li>
+    <li>Use the service for any unlawful or harmful purpose</li>
+    <li>Reverse engineer or copy any part of our product</li>
+</ul>
+<h3>Termination</h3>
+<p>We reserve the right to suspend or terminate your account if you breach these Terms or misuse the service. Upon termination, your access will be revoked, and data may be deleted after 30 days.</p>
+<p>We may update these Terms occasionally. If changes are material, we’ll notify you via email or platform alert. Continued use after changes means you accept the new Terms.</p>
+<h3>Limitation of Liability</h3>
+<p>To the maximum extent permitted by law, RoomGate and its affiliates shall not be liable for any indirect, incidental, or consequential damages arising from your use of the platform.</p>
+<p>These Terms are governed by and construed under the laws of the State of California, without regard to its conflict of law principles.</p>',
                 'image_path' => null,
                 'button_text' => null,
                 'button_link' => null,
