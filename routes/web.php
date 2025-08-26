@@ -132,6 +132,8 @@ Route::middleware(['auth', 'role:landlord', 'subscription.check'])
         Route::get('find-tenant-contract/{userId}', [ContractController::class, 'findTenantContract'])->name('findTenantContract');
         Route::post('contracts/{contract}/document', [App\Http\Controllers\DocumentController::class, 'uploadContractDocument'])->name('contracts.document.upload');
         Route::resource('rooms', controller: RoomController::class);
+        Route::get('/properties/{property}/room-types', [RoomController::class, 'getRoomTypesForProperty'])->name('properties.roomTypes');
+
         Route::resource('amenities', AmenityController::class);
 
         // --- Payment MANAGEMENT ---

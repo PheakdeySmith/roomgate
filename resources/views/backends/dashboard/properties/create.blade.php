@@ -61,10 +61,10 @@
                             <label for="country" class="form-label">Country</label>
                             <select class="form-control" id="country" name="country" required>
                                 <option value="" disabled selected>Select a country...</option>
+                                <option value="CAM">Cambodia</option>
                                 <option value="USA">United States</option>
                                 <option value="Canada">Canada</option>
                                 <option value="UK">United Kingdom</option>
-                                {{-- Add other countries as needed --}}
                             </select>
                         </div>
                     </div>

@@ -37,7 +37,7 @@ class RoomController extends Controller
             if ($request->filled('room_type_id')) {
                 $roomsQuery->where('room_type_id', $request->room_type_id);
             }
-            
+
             // Apply filter for Status
             if ($request->filled('status') && $request->status !== 'all') {
                 $roomsQuery->where('status', $request->status);
@@ -56,6 +56,17 @@ class RoomController extends Controller
         }
 
         return view('backends.dashboard.rooms.index', compact('rooms', 'properties', 'roomTypes', 'amenities'));
+    }
+
+    public function getRoomTypesForProperty(Property $property)
+    {
+        // Authorize to make sure the landlord owns this property
+        if (Auth::id() !== $property->landlord_id) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
+        // Fetch the room types using the relationship and return them as JSON
+        return response()->json($property->roomTypes);
     }
 
     public function show(Room $room)
@@ -89,14 +100,14 @@ class RoomController extends Controller
         if (!$currentUser || !$currentUser->hasRole('landlord')) {
             return redirect()->route('unauthorized');
         }
-        
+
         // Check subscription limits for rooms
         if ($currentUser->hasReachedRoomLimit()) {
             $subscription = $currentUser->activeSubscription();
             $limit = $subscription ? $subscription->subscriptionPlan->rooms_limit : 0;
-            
+
             return back()->with('error', "You have reached the maximum number of rooms ($limit) allowed in your subscription plan. Please upgrade your plan to add more rooms.")
-                  ->withInput();
+                ->withInput();
         }
 
         $validatedData = $request->validate([
@@ -124,7 +135,7 @@ class RoomController extends Controller
             'size' => 'nullable|string|max:255',
             'floor' => 'nullable|integer',
             'status' => 'required|string|in:available,occupied,maintenance',
-            'amenities'   => 'nullable|array',
+            'amenities' => 'nullable|array',
             'amenities.*' => 'exists:amenities,id,landlord_id,' . $currentUser->id,
         ]);
 
@@ -178,7 +189,7 @@ class RoomController extends Controller
             'size' => 'nullable|string|max:255',
             'floor' => 'nullable|integer',
             'status' => 'required|string|in:available,occupied,maintenance',
-            'amenities'   => 'nullable|array',
+            'amenities' => 'nullable|array',
             'amenities.*' => 'exists:amenities,id,landlord_id,' . $currentUser->id,
         ]);
 
@@ -239,14 +250,14 @@ class RoomController extends Controller
         if (!$currentUser || !$currentUser->hasRole('landlord') || $property->landlord_id !== $currentUser->id) {
             return redirect()->route('unauthorized');
         }
-        
+
         // Check subscription limits for rooms
         if ($currentUser->hasReachedRoomLimit()) {
             $subscription = $currentUser->activeSubscription();
             $limit = $subscription ? $subscription->subscriptionPlan->rooms_limit : 0;
-            
+
             return back()->with('error', "You have reached the maximum number of rooms ($limit) allowed in your subscription plan. Please upgrade your plan to add more rooms.")
-                  ->withInput();
+                ->withInput();
         }
 
         $validatedData = $request->validate([

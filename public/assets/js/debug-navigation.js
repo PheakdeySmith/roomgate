@@ -12,14 +12,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const closestLink = target.closest('a');
         
         if (closestLink) {
-            console.log('Link clicked:', {
-                href: closestLink.getAttribute('href'),
-                text: closestLink.textContent.trim(),
-                tagName: target.tagName,
-                classes: target.className,
-                defaultPrevented: e.defaultPrevented,
-                eventPhase: e.eventPhase
-            });
+            // console.log('Link clicked:', {
+            //     href: closestLink.getAttribute('href'),
+            //     text: closestLink.textContent.trim(),
+            //     tagName: target.tagName,
+            //     classes: target.className,
+            //     defaultPrevented: e.defaultPrevented,
+            //     eventPhase: e.eventPhase
+            // });
             
             // Check if any parent has event listeners that might be interfering
             let currentNode = closestLink;
@@ -48,9 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('submit', logFormSubmit, true);
     
     // Monitor navigation events
-    window.addEventListener('beforeunload', function(e) {
-        console.log('Navigation away from page');
-    });
+    // window.addEventListener('beforeunload', function(e) {
+    //     console.log('Navigation away from page');
+    // });
     
     // Patch history methods to log navigation
     const originalPushState = history.pushState;
@@ -60,10 +60,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     const originalReplaceState = history.replaceState;
-    history.replaceState = function() {
-        console.log('History replaceState called with:', arguments);
-        return originalReplaceState.apply(this, arguments);
-    };
+    // history.replaceState = function() {
+    //     console.log('History replaceState called with:', arguments);
+    //     return originalReplaceState.apply(this, arguments);
+    // };
     
     // Fix for sidebar links
     const sidenavLinks = document.querySelectorAll('.side-nav-link');

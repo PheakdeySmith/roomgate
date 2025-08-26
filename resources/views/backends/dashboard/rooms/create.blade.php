@@ -12,7 +12,7 @@
                         
                         <div class="col-md-6 mb-3">
                             <label for="property_id" class="form-label">Property Type</label>
-                            <select class="form-control" id="property_id" name="property_id" required>
+                            <select class="form-control" id="property_filter" name="property_id" required>
                                 <option value="" disabled selected>Select a property...</option>
                                 @foreach ($properties as $property)
                                     <option value="{{ $property->id }}">{{ $property->name }}</option>
@@ -20,12 +20,12 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="room_type_id" class="form-label">Property Type</label>
-                            <select class="form-control" id="room_type_id" name="room_type_id" required>
-                                <option value="" disabled selected>Select a type...</option>
-                                @foreach ($roomTypes as $roomType)
+                            <label for="room_type_id" class="form-label">Room Type</label>
+                            <select class="form-control" id="room_type_filter" name="room_type_id" required>
+                                <option value="">Select a property first</option>
+                                {{-- @foreach ($roomTypes as $roomType)
                                     <option value="{{ $roomType->id }}">{{ $roomType->name }}</option>
-                                @endforeach
+                                @endforeach --}}
                             </select>
                         </div>
                     </div>
@@ -98,3 +98,43 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const propertyFilter = document.getElementById('property_filter');
+        const roomTypeFilter = document.getElementById('room_type_filter');
+
+        propertyFilter.addEventListener('change', function () {
+            const propertyId = this.value;
+
+            // Clear the room type dropdown first
+            roomTypeFilter.innerHTML = '<option value="">Loading...</option>';
+
+            if (!propertyId) {
+                // If "All Properties" is selected, reset the room type filter
+                roomTypeFilter.innerHTML = '<option value="">Select a property first</option>';
+                return;
+            }
+
+            // Fetch the room types from our new route
+            fetch(`/landlord/properties/${propertyId}/room-types`)
+                .then(response => response.json())
+                .then(data => {
+                    // Reset the dropdown again
+                    roomTypeFilter.innerHTML = '<option value="">All Room Types</option>';
+
+                    // Add the new room type options from the server's response
+                    data.forEach(roomType => {
+                        const option = document.createElement('option');
+                        option.value = roomType.id;
+                        option.textContent = roomType.name;
+                        roomTypeFilter.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching room types:', error);
+                    roomTypeFilter.innerHTML = '<option value="">Could not load data</option>';
+                });
+        });
+    });
+</script>

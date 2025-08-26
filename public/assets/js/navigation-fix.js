@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add a direct navigation handler
         newLink.addEventListener('click', function(e) {
-            console.log('Link clicked, navigating to:', this.href);
+            // console.log('Link clicked, navigating to:', this.href);
             // Prevent any other event handlers
             e.preventDefault();
             e.stopPropagation();
