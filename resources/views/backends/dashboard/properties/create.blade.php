@@ -59,13 +59,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="country" class="form-label">Country</label>
-                            <select class="form-control" id="country" name="country" required>
-                                <option value="" disabled selected>Select a country...</option>
-                                <option value="Cambodia">Cambodia</option>
-                                <option value="United States">United States</option>
-                                <option value="Canada">Canada</option>
-                                <option value="United Kingdom">United Kingdom</option>
-                            </select>
+                            <input type="text" class="form-control" id="country" name="country" required placeholder="Cambodia">
                         </div>
                     </div>
 
