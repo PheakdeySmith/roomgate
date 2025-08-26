@@ -20,7 +20,7 @@
                     <img src="{{ asset('assets') }}/images/logo.png" alt="logo light" height="70" class="logo-light">
                 </a>
 
-                <h4 class="fw-semibold mb-2">Welcome to Boron Admin</h4>
+                <h4 class="fw-semibold mb-2">Welcome to RoomGate</h4>
 
                 <p class="text-muted mb-4">Enter your name , email address and password to access account.</p>
 
@@ -43,7 +43,7 @@
                     <div class="d-flex justify-content-between mb-3">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="checkbox-signin">
-                            <label class="form-check-label" for="checkbox-signin">I agree to all <a href="https://coderthemes.com/boron/layouts/auth-register.html#!" class="link-dark text-decoration-underline">Terms &amp; Condition</a> </label>
+                            <label class="form-check-label" for="checkbox-signin">I agree to all <a href="{{ route('terms') }}" class="link-dark text-decoration-underline">Terms &amp; Condition</a> </label>
                         </div>
                     </div>
 
@@ -54,14 +54,14 @@
 
                 <p class="text-danger fs-14 mb-4">Already have an account? <a href="{{ route('login')}}" class="fw-semibold text-dark ms-1">Login !</a></p>
 
-                <p class="fs-13 fw-semibold">Or Sign Up with Social</p>
+                {{-- <p class="fs-13 fw-semibold">Or Sign Up with Social</p>
 
                 <div class="d-flex justify-content-center gap-2 mb-3">
                     <a href="" class="btn btn-soft-danger avatar-lg"><i class="ti ti-brand-google-filled fs-24"></i></a>
                     <a href="" class="btn btn-soft-success avatar-lg"><i class="ti ti-brand-apple fs-24"></i></a>
                     <a href="" class="btn btn-soft-primary avatar-lg"><i class="ti ti-brand-facebook fs-24"></i></a>
                     <a href="" class="btn btn-soft-info avatar-lg"><i class="ti ti-brand-linkedin fs-24"></i></a>
-                </div>
+                </div> --}}
 
                 <p class="mt-auto mb-0">
                     <script>document.write(new Date().getFullYear())</script> © Boron - By <span class="fw-bold text-decoration-underline text-uppercase text-reset fs-12">Coderthemes</span>
