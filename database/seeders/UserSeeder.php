@@ -27,5 +27,12 @@ class UserSeeder extends Seeder
         );
         $landlord->assignRole('landlord');
 
+        // Create tenant user
+        $tenant = User::firstOrCreate(
+            ['email' => 'tenant@gmail.com'],
+            ['name' => 'Tenant User', 'password' => bcrypt('11111111')]
+        );
+        $tenant->assignRole('tenant');
+
     }
 }
