@@ -1,4 +1,4 @@
-{{-- This is your full pricing page view, e.g., resources/views/pricing.blade.php --}}
+{{-- @include('frontends.layouts.partials.pricing') --}}
 
 <style>
     /* --- Billing Toggle Styles --- */

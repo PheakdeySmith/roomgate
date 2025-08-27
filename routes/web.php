@@ -189,6 +189,7 @@ Route::middleware(['auth', 'role:tenant'])->prefix('tenant')->name('tenant.')->g
 Route::get('/', [FrontendController::class, 'index'])->name('frontend');
 Route::get('/features', [FrontendController::class, 'feature'])->name('features');
 Route::get('/terms', [FrontendController::class, 'terms'])->name('terms');
+Route::get('/pricing', [FrontendController::class, 'pricing'])->name('pricing');
 
 // Contact Support Page
 Route::middleware(['auth'])->group(function () {

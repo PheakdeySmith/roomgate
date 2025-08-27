@@ -64,4 +64,21 @@ class FrontendController extends Controller
             'content' => $pageContents,
         ]);
     }
+
+    public function pricing()
+    {
+        $pageContents = PageContent::all()->keyBy('key');
+        $plans = SubscriptionPlan::where('is_active', true)
+                 ->orderBy('price')
+                 ->get()
+                 ->groupBy('plan_group');
+
+        $faqs = Faq::orderBy('order')->get();
+
+        return view("frontends.layouts.pricing_page", [
+            'content' => $pageContents,
+            'plans' => $plans,
+            'faqs' => $faqs,
+        ]);
+    }
 }
