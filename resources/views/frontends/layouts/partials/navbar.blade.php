@@ -9,7 +9,7 @@
                 <nav role="navigation" class="nav-menu w-nav-menu">
                     <a href="{{ route('frontend') }}" class="nav-link w-nav-link">Overview</a>
                     <a href="{{ route('features') }}" class="nav-link w-nav-link">Features</a>
-                    <a href="/pricing" class="nav-link w-nav-link">Pricing</a>
+                    <a href="{{ route('pricing') }}" class="nav-link w-nav-link">Pricing</a>
                 </nav>
                 <div class="nav-buttons">
                     <a href="{{ route('register') }}" target="_blank" class="button is-secondary hide-tablet w-button">Register</a>

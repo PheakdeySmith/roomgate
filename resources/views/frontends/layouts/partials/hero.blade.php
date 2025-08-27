@@ -18,7 +18,8 @@
                             class="button is-secondary w-button">{{ $content['hero']->button_text ?? 'Start Free Trial' }}</a>
                         <a href="{{ route('features') }}" class="button is-outline w-button">Explore Features</a>
                     </div>
-                    <div class="spacer-small"></div>
+                    
+                    {{-- <div class="spacer-small"></div>
                     <div class="home1_hero_reviews">
                         <div class="home1_hero_reviews-authors">
                             <img loading="lazy" src="{{ asset('asset_frontend') }}/images/avatar1.avif"
@@ -33,7 +34,8 @@
                         <div class="text-size-tiny text-weight-medium">4.8/5</div>
                         <div class="text-size-tiny text-weight-medium">610+ Reviews</div>
                     </div>
-                    <div class="spacer-medium"></div>
+                    <div class="spacer-medium"></div> --}}
+
                 </div>
                 <a href="#" class="home1_hero_lightbox w-inline-block w-lightbox">
                     <div data-autoplay="true" data-loop="true" data-wf-ignore="true"

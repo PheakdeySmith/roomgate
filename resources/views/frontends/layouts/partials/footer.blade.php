@@ -23,15 +23,14 @@
                 <div class="footer_nav-column">
                     <div class="text-style-badge">Product</div>
                     <div class="footer_nav-list">
-                        <a href="/pricing" class="footer_nav-link">Pricing</a>
-                        <a href="/account/sign-up" class="footer_nav-link">Try For Free</a>
+                        <a href="{{ route('pricing') }}" class="footer_nav-link">Pricing</a>
+                        <a href="{{ route('register') }}" class="footer_nav-link">Try For Free</a>
                     </div>
                 </div>
                 <div class="footer_nav-column">
                     <div class="text-style-badge">Terms &amp; Conditions</div>
                     <div class="footer_nav-list">
                         <a href="{{ route('terms')}}" class="footer_nav-link">Terms &amp; Conditions</a>
-                        <a href="/utility/privacy" class="footer_nav-link">Privacy Policy</a>
                         <a href="/utility/terms" class="footer_nav-link">Support</a>
                     </div>
                 </div>

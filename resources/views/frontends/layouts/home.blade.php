@@ -6,7 +6,7 @@
 
     @include('frontends.layouts.partials.hero')
 
-    @include('frontends.layouts.partials.moving')
+    {{-- @include('frontends.layouts.partials.moving') --}}
 
     @include('frontends.layouts.partials.benefits')
 
