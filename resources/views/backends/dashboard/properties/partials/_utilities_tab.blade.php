@@ -28,27 +28,89 @@
     </div>
 </div>
 
-<ul class="nav nav-tabs mb-3" id="utilitiesTab" role="tablist">
+{{-- Desktop Navigation Tabs --}}
+<ul class="nav nav-tabs mb-3 d-none d-sm-flex" id="utilitiesTab" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="all-rooms-tab" data-bs-toggle="tab" data-bs-target="#all-rooms-pane"
-            type="button" role="tab"><i class="ti ti-list-details"></i><span class="d-none d-sm-inline ms-1">All
-                Rooms</span></button>
+            type="button" role="tab" title="All Rooms">
+            <i class="ti ti-list-details"></i><span class="ms-1">All Rooms</span>
+        </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="recorded-tab" data-bs-toggle="tab" data-bs-target="#recorded-pane" type="button"
-            role="tab"><i class="ti ti-circle-check"></i><span
-                class="d-none d-sm-inline ms-1">Recorded</span></button>
+            role="tab" title="Recorded">
+            <i class="ti ti-circle-check"></i><span class="ms-1">Recorded</span>
+        </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="needs-reading-tab" data-bs-toggle="tab" data-bs-target="#needs-reading-pane"
-            type="button" role="tab"><i class="ti ti-alert-triangle"></i><span
-                class="d-none d-sm-inline ms-1">Needs
-                Reading</span></button>
+            type="button" role="tab" title="Needs Reading">
+            <i class="ti ti-alert-triangle"></i><span class="ms-1">Needs Reading</span>
+        </button>
     </li>
 </ul>
 
+{{-- Mobile Navigation Pills --}}
+<div class="d-sm-none mb-3">
+    <div class="d-flex justify-content-between nav nav-pills nav-fill" id="utilitiesTabMobile" role="tablist">
+        <button class="btn btn-sm btn-light flex-grow-1 active rounded-pill mx-1 mobile-tab-btn" id="all-rooms-tab-mobile" data-bs-toggle="tab" 
+            data-bs-target="#all-rooms-pane" type="button" role="tab">
+            <i class="ti ti-list-details"></i>
+            <span class="d-block fs-xs">All</span>
+        </button>
+        <button class="btn btn-sm btn-light flex-grow-1 rounded-pill mx-1 mobile-tab-btn" id="recorded-tab-mobile" data-bs-toggle="tab" 
+            data-bs-target="#recorded-pane" type="button" role="tab">
+            <i class="ti ti-circle-check text-success"></i>
+            <span class="d-block fs-xs">Recorded</span>
+        </button>
+        <button class="btn btn-sm btn-light flex-grow-1 rounded-pill mx-1 mobile-tab-btn" id="needs-reading-tab-mobile" data-bs-toggle="tab" 
+            data-bs-target="#needs-reading-pane" type="button" role="tab">
+            <i class="ti ti-alert-triangle text-warning"></i>
+            <span class="d-block fs-xs">Needs</span>
+        </button>
+    </div>
+</div>
+
+{{-- Extra tiny screen CSS fixes --}}
+<style>
+    /* Fix font sizes for extremely small screens */
+    @media (max-width: 360px) {
+        .fs-xs {
+            font-size: 0.65rem !important;
+        }
+        
+        .mobile-tab-btn {
+            padding: 0.25rem 0.1rem;
+        }
+        
+        .mobile-tab-btn i {
+            font-size: 0.9rem;
+        }
+        
+        #roomSearchInput {
+            font-size: 0.8rem;
+            height: 36px;
+        }
+    }
+    
+    /* For iPhone SE and similar */
+    @media (max-width: 320px) {
+        .mobile-tab-btn {
+            padding: 0.2rem 0.05rem;
+            margin-left: 0.1rem !important;
+            margin-right: 0.1rem !important;
+        }
+    }
+</style>
+
 <div class="mb-3">
-    <input type="text" id="roomSearchInput" class="form-control" placeholder="Search by Room, Tenant, or Meter #...">
+    <div class="input-group">
+        <span class="input-group-text bg-light border-end-0">
+            <i class="ti ti-search"></i>
+        </span>
+        <input type="text" id="roomSearchInput" class="form-control border-start-0 ps-0" 
+               placeholder="Search rooms, tenants, or meters...">
+    </div>
 </div>
 
 <div class="tab-content" id="utilitiesTabContent">

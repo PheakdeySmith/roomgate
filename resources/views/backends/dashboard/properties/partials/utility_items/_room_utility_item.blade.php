@@ -6,14 +6,40 @@
 
 <div class="accordion-item {{ $status['class'] === 'danger' ? 'border border-danger' : '' }}">
     <h2 class="accordion-header" id="{{ $headerId }}">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        <button class="accordion-button collapsed room-accordion-btn" type="button" data-bs-toggle="collapse"
             data-bs-target="#{{ $accordionId }}">
-            <span class="fw-bold me-2">Room {{ $room->room_number }}</span> -
-            <span class="text-muted ms-2">{{ $room->activeContract->tenant->name ?? 'Vacant' }}</span>
+            <span class="fw-bold me-1">Room {{ $room->room_number }}</span>
+            <span class="text-muted ms-1 text-truncate tenant-name">{{ $room->activeContract->tenant->name ?? 'Vacant' }}</span>
             <span class="badge bg-{{ $status['class'] }}-subtle text-{{ $status['class'] }} ms-auto"><i
-                    class="ti ti-{{ $status['icon'] }} me-1"></i>{{ $status['text'] }}</span>
+                    class="ti ti-{{ $status['icon'] }} me-1"></i><span class="d-none d-sm-inline">{{ $status['text'] }}</span></span>
         </button>
     </h2>
+    
+    {{-- Extra small screen CSS for room accordion button --}}
+    <style>
+        @media (max-width: 360px) {
+            .room-accordion-btn {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .tenant-name {
+                max-width: 80px;
+            }
+            
+            /* Make Add Meter and History buttons more compact */
+            .d-md-none .btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .tenant-name {
+                max-width: 60px;
+            }
+        }
+    </style>
     <div id="{{ $accordionId }}" class="accordion-collapse collapse" data-bs-parent="#{{ $type }}RoomsAccordion">
         <div class="accordion-body">
             {{-- Main content based on status --}}
@@ -27,13 +53,50 @@
             @else
                 {{-- Action Buttons --}}
                 <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
-                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
-                        data-bs-target="#meterHistoryModal-{{ $room->id }}">
-                        <i class="ti ti-history me-1"></i> View History
-                    </button>
-                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#assignMeterModal"
-                        data-room-id="{{ $room->id }}" data-room-number="{{ $room->room_number }}"><i
-                            class="ti ti-plus me-1"></i> Assign New Meter</button>
+                    {{-- Desktop action buttons --}}
+                    <div class="d-none d-md-block">
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                            data-bs-target="#meterHistoryModal-{{ $room->id }}">
+                            <i class="ti ti-history me-1"></i> View History
+                        </button>
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#assignMeterModal"
+                            data-room-id="{{ $room->id }}" data-room-number="{{ $room->room_number }}"><i
+                                class="ti ti-plus me-1"></i> Assign New Meter</button>
+                    </div>
+                    
+                    {{-- Mobile friendly buttons - Redesigned --}}
+                    <div class="d-md-none w-100">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button class="btn btn-primary rounded-circle mobile-action-btn" data-bs-toggle="modal" data-bs-target="#assignMeterModal"
+                                data-room-id="{{ $room->id }}" data-room-number="{{ $room->room_number }}">
+                                <i class="ti ti-plus"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary rounded-circle mobile-action-btn" data-bs-toggle="modal"
+                                data-bs-target="#meterHistoryModal-{{ $room->id }}">
+                                <i class="ti ti-history"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {{-- Styles for extremely small screens --}}
+                    <style>
+                        .mobile-action-btn {
+                            width: 36px;
+                            height: 36px;
+                            padding: 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                        
+                        @media (max-width: 360px) {
+                            .mobile-action-btn {
+                                width: 32px;
+                                height: 32px;
+                                font-size: 0.75rem;
+                            }
+                        }
+                    </style>
                 </div>
 
                 @if ($status['icon'] === 'alert-triangle')

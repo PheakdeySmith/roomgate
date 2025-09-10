@@ -192,28 +192,31 @@
         });
     </script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // 1. Select the modal element
             const assignMeterModal = document.getElementById('assignMeterModal');
 
-            // 2. Listen for the 'show.bs.modal' event, which fires just before the modal opens
-            assignMeterModal.addEventListener('show.bs.modal', function (event) {
+            // ADD THIS CHECK
+            if (assignMeterModal) {
+                // 2. Listen for the 'show.bs.modal' event, which fires just before the modal opens
+                assignMeterModal.addEventListener('show.bs.modal', function(event) {
 
-                // 3. Get the button that triggered the modal
-                const button = event.relatedTarget;
+                    // 3. Get the button that triggered the modal
+                    const button = event.relatedTarget;
 
-                // 4. Extract the room ID and number from the button's data attributes
-                const roomId = button.getAttribute('data-room-id');
-                const roomNumber = button.getAttribute('data-room-number');
+                    // 4. Extract the room ID and number from the button's data attributes
+                    const roomId = button.getAttribute('data-room-id');
+                    const roomNumber = button.getAttribute('data-room-number');
 
-                // 5. Find the input fields inside the modal
-                const modalRoomNumberInput = assignMeterModal.querySelector('#modalRoomNumber');
-                const modalRoomIdInput = assignMeterModal.querySelector('#modalRoomId');
+                    // 5. Find the input fields inside the modal
+                    const modalRoomNumberInput = assignMeterModal.querySelector('#modalRoomNumber');
+                    const modalRoomIdInput = assignMeterModal.querySelector('#modalRoomId');
 
-                // 6. Set the values of the input fields
-                modalRoomNumberInput.value = roomNumber;
-                modalRoomIdInput.value = roomId;
-            });
+                    // 6. Set the values of the input fields
+                    modalRoomNumberInput.value = roomNumber;
+                    modalRoomIdInput.value = roomId;
+                });
+            } // END CHECK
         });
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -286,43 +289,47 @@
 
     <script>
         // Wait for the entire page to be loaded before running the script
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
 
             // 1. Select the search input field
             const searchInput = document.getElementById('roomSearchInput');
 
-            // 2. Add an event listener that fires every time a key is released
-            searchInput.addEventListener('keyup', function (event) {
+            // ADD THIS CHECK
+            if (searchInput) {
+                // 2. Add an event listener that fires every time a key is released
+                searchInput.addEventListener('keyup', function(event) {
 
-                // 3. Get the search term and convert it to lowercase for case-insensitive matching
-                const searchTerm = event.target.value.toLowerCase();
+                    // 3. Get the search term and convert it to lowercase for case-insensitive matching
+                    const searchTerm = event.target.value.toLowerCase();
 
-                // 4. IMPORTANT: Find which tab pane is currently active
-                const activePane = document.querySelector('#utilitiesTabContent .tab-pane.active');
+                    // 4. IMPORTANT: Find which tab pane is currently active
+                    const activePane = document.querySelector('#v-pills-all-rooms .tab-pane.active') || document.querySelector('#v-pills-utilities .tab-pane.active');
 
-                // If an active pane is found, proceed with filtering
-                if (activePane) {
 
-                    // 5. Select all the accordion items *only within that active pane*
-                    const accordionItems = activePane.querySelectorAll('.accordion-item');
+                    // If an active pane is found, proceed with filtering
+                    if (activePane) {
 
-                    // 6. Loop through each accordion item to decide whether to show or hide it
-                    accordionItems.forEach(function (item) {
+                        // 5. Select all the accordion items *only within that active pane*
+                        const accordionItems = activePane.querySelectorAll('.accordion-item');
 
-                        // Get the searchable text from the accordion's button
-                        const itemText = item.querySelector('.accordion-button').textContent.toLowerCase();
+                        // 6. Loop through each accordion item to decide whether to show or hide it
+                        accordionItems.forEach(function(item) {
 
-                        // 7. Check if the room's text includes the search term
-                        if (itemText.includes(searchTerm)) {
-                            // If it matches, make sure the item is visible
-                            item.style.display = 'block';
-                        } else {
-                            // If it doesn't match, hide the item
-                            item.style.display = 'none';
-                        }
-                    });
-                }
-            });
+                            // Get the searchable text from the accordion's button
+                            const itemText = item.querySelector('.accordion-button').textContent.toLowerCase();
+
+                            // 7. Check if the room's text includes the search term
+                            if (itemText.includes(searchTerm)) {
+                                // If it matches, make sure the item is visible
+                                item.style.display = 'block';
+                            } else {
+                                // If it doesn't match, hide the item
+                                item.style.display = 'none';
+                            }
+                        });
+                    }
+                });
+            } // END CHECK
         });
     </script>
 
@@ -339,9 +346,12 @@
                     const formData = new FormData(form);
                     const submitButton = form.querySelector('button[type="submit"]');
 
-                    // Disable button and show a loading spinner
-                    submitButton.disabled = true;
-                    submitButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> Saving...`;
+                    if (submitButton) {
+                        // Disable button and show a loading spinner
+                        submitButton.disabled = true;
+                        const originalButtonHtml = submitButton.innerHTML;
+                        submitButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> Saving...`;
+                    }
 
                     // Send the data to the server in the background
                     fetch(url, {
@@ -364,25 +374,59 @@
                             if (data.success) {
                                 updateMeterCardUI(form, data.reading); // Call the UI update function
                                 form.reset(); // Clear the input field
+                                
+                                // Show success feedback
+                                const formContainer = form.closest('.mb-4');
+                                if (formContainer) {
+                                    const successAlert = document.createElement('div');
+                                    successAlert.className = 'alert alert-success alert-dismissible fade show mt-2';
+                                    successAlert.innerHTML = `
+                                        <strong>Success!</strong> Reading of ${data.reading.reading_value} saved successfully.
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    `;
+                                    formContainer.appendChild(successAlert);
+                                    
+                                    // Auto-remove after 3 seconds
+                                    setTimeout(() => {
+                                        successAlert.classList.remove('show');
+                                        setTimeout(() => successAlert.remove(), 150);
+                                    }, 3000);
+                                }
                             }
                         })
                         .catch(error => {
                             // Handle any errors, including validation errors
                             const errorMessage = error?.errors?.reading_value?.[0] || error.message || 'An unknown error occurred.';
-                            alert('Error: ' + errorMessage);
+                            
+                            // Show error in a more user-friendly way
+                            const formContainer = form.closest('.mb-4');
+                            if (formContainer) {
+                                const errorAlert = document.createElement('div');
+                                errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-2';
+                                errorAlert.innerHTML = `
+                                    <strong>Error:</strong> ${errorMessage}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                `;
+                                formContainer.appendChild(errorAlert);
+                            } else {
+                                alert('Error: ' + errorMessage);
+                            }
+                            
                             console.error('Submission Error:', error);
                         })
                         .finally(() => {
                             // Always re-enable the button
-                            submitButton.disabled = false;
-                            submitButton.textContent = 'Save';
+                            if (submitButton) {
+                                submitButton.disabled = false;
+                                submitButton.innerHTML = '<i class="ti ti-device-floppy"></i><span class="d-none d-sm-inline-block ms-1">Save</span>';
+                            }
                         });
                 }
             });
         });
 
         /**
-         * THIS IS THE CORRECTED FUNCTION
+         * IMPROVED FUNCTION WITH SAFETY CHECKS
          * It finds the parent meter card and updates ALL relevant elements within it.
          */
         function updateMeterCardUI(form, newReading) {
@@ -393,46 +437,161 @@
                 return;
             }
 
-            // --- Data Preparation ---
-            const readingDate = new Date(newReading.reading_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const unit = newReading?.meter?.utility_type?.unit_of_measure || '';
-            const newReadingValue = parseFloat(newReading.reading_value).toFixed(2);
+            try {
+                // --- Data Preparation ---
+                const readingDate = new Date(newReading.reading_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const unit = newReading?.meter?.utility_type?.unit_of_measure || '';
+                const newReadingValue = parseFloat(newReading.reading_value).toFixed(2);
 
-            // --- UI Updates ---
+                // --- UI Updates ---
 
-            // 1. Update all summary value elements (for both desktop and mobile)
-            meterCard.querySelectorAll('.last-reading-value').forEach(el => {
-                el.textContent = `${newReadingValue} ${unit}`;
-            });
-
-            // 2. Update all summary date elements
-            meterCard.querySelectorAll('.last-reading-date').forEach(el => {
-                el.textContent = `on ${readingDate}`;
-            });
-
-            // 3. Update all history tables
-            meterCard.querySelectorAll('.reading-history-tbody').forEach(tbody => {
-                const firstRow = tbody.querySelector('tr');
-                let previousValue = 0;
-
-                // Find the previous value from the top row of the existing table
-                if (firstRow && firstRow.cells.length > 1) {
-                    previousValue = parseFloat(firstRow.cells[1].textContent);
-                } else {
-                    // Fallback for an empty table is not needed here since we are prepending,
-                    // but the logic for consumption on the new row needs the previous top value.
-                    // A more robust solution would be to recalculate the whole table, but this is simpler.
+                // 1. Update all summary value elements (for both desktop and mobile)
+                const readingValueEls = meterCard.querySelectorAll('.last-reading-value');
+                if (readingValueEls && readingValueEls.length > 0) {
+                    readingValueEls.forEach(el => {
+                        if (el) {
+                            // Check if we need to append the unit (new design has separate unit element)
+                            if (el.nextElementSibling && el.nextElementSibling.classList.contains('text-muted')) {
+                                el.textContent = newReadingValue;
+                            } else {
+                                el.textContent = `${newReadingValue} ${unit}`;
+                            }
+                        }
+                    });
                 }
 
-                // For simplicity, we won't calculate consumption on the fly for the "Just Added" row.
-                // A full refresh would be needed to see the full calculation chain.
-                const newRow = tbody.insertRow(0);
-                newRow.innerHTML = `
-                            <td>${readingDate}</td>
-                            <td>${newReadingValue}</td>
-                            <td><span class="badge bg-info-subtle text-info">Just Added</span></td>
-                        `;
-            });
+                // 2. Update all summary date elements
+                const readingDateEls = meterCard.querySelectorAll('.last-reading-date');
+                if (readingDateEls && readingDateEls.length > 0) {
+                    readingDateEls.forEach(el => {
+                        if (el) {
+                            // For the new design with badge dates
+                            if (el.classList.contains('badge')) {
+                                el.textContent = readingDate;
+                            } else {
+                                el.textContent = `on ${readingDate}`;
+                            }
+                        }
+                    });
+                }
+                
+                // Update the meter card appearance - remove warning styling
+                meterCard.classList.remove('border-warning');
+                const cardHeader = meterCard.querySelector('.card-header');
+                if (cardHeader) {
+                    cardHeader.classList.remove('bg-warning-subtle');
+                }
+                
+                // 3. Check if all meters in the room have current readings
+                // Find the accordion item (room) containing this meter card
+                const accordionItem = meterCard.closest('.accordion-item');
+                if (accordionItem) {
+                    // Count all meter cards in this room
+                    const allMeters = accordionItem.querySelectorAll('.card');
+                    let allMetersRead = true;
+                    
+                    if (allMeters && allMeters.length > 0) {
+                        // Check each meter to see if it has a recent reading date
+                        allMeters.forEach(meter => {
+                            if (meter === meterCard) {
+                                // This meter was just read, so it's current
+                                return;
+                            }
+                            
+                            // For other meters, check their last reading date
+                            const dateEl = meter.querySelector('.last-reading-date');
+                            if (dateEl) {
+                                const dateText = dateEl.textContent;
+                                // Parse the date from badge or "on Sep 06, 2025" format
+                                const dateStr = dateText.startsWith('on ') ? dateText.replace('on ', '') : dateText;
+                                const parsedDate = new Date(dateStr);
+                                const currentMonth = new Date().getMonth();
+                                const currentYear = new Date().getFullYear();
+                                
+                                // Check if this meter's reading is not from the current month
+                                if (parsedDate.getMonth() !== currentMonth || parsedDate.getFullYear() !== currentYear) {
+                                    allMetersRead = false;
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Update the room's status badge if all meters are now read
+                    const statusBadge = accordionItem.querySelector('.badge');
+                    if (statusBadge && allMetersRead) {
+                        statusBadge.className = 'badge bg-success-subtle text-success ms-auto';
+                        statusBadge.innerHTML = '<i class="ti ti-check me-1"></i>Recorded';
+                    }
+                }
+
+                // 3. Update all history tables - handles both table and div-based layouts
+                const historyTbodies = meterCard.querySelectorAll('.reading-history-tbody');
+                if (historyTbodies && historyTbodies.length > 0) {
+                    historyTbodies.forEach(tbody => {
+                        if (!tbody) return;
+                        
+                        try {
+                            // Check if we're dealing with a table or div-based layout
+                            if (tbody.tagName === 'TBODY') {
+                                // Traditional table layout
+                                const newRow = tbody.insertRow(0);
+                                if (newRow) {
+                                    newRow.innerHTML = `
+                                        <td>${readingDate}</td>
+                                        <td>${newReadingValue}</td>
+                                        <td><span class="badge bg-info-subtle text-info">Just Added</span></td>
+                                    `;
+                                }
+                            } else {
+                                // Div-based layout for mobile
+                                const newReadingDiv = document.createElement('div');
+                                newReadingDiv.className = 'd-flex align-items-center py-2 px-3 border-bottom border-secondary-subtle';
+                                newReadingDiv.innerHTML = `
+                                    <div class="hide-on-xs fs-12" style="width: 35%">${readingDate}</div>
+                                    <div class="full-width-on-xs text-center fw-medium" style="width: 30%">${newReadingValue}</div>
+                                    <div class="full-width-on-xs text-end" style="width: 35%">
+                                        <span class="badge bg-info">Just Added</span>
+                                    </div>
+                                `;
+                                
+                                // Insert at the beginning
+                                if (tbody.firstChild) {
+                                    tbody.insertBefore(newReadingDiv, tbody.firstChild);
+                                } else {
+                                    tbody.appendChild(newReadingDiv);
+                                }
+                            }
+                        } catch (err) {
+                            console.warn('Could not update history table:', err);
+                        }
+                    });
+                }
+                
+                // Refresh history container if it exists
+                const historyContainers = meterCard.querySelectorAll('.history-container');
+                if (historyContainers && historyContainers.length > 0) {
+                    historyContainers.forEach(container => {
+                        if (!container) return;
+                        const url = container.dataset.url;
+                        if (url) {
+                            // Add a small delay to allow the server to process the new reading
+                            setTimeout(() => {
+                                container.innerHTML = `<div class="text-center p-4"><div class="spinner-border spinner-border-sm" role="status"></div></div>`;
+                                fetch(url)
+                                    .then(response => response.text())
+                                    .then(html => {
+                                        container.innerHTML = html;
+                                    })
+                                    .catch(error => {
+                                        container.innerHTML = '<p class="text-danger text-center">Could not load history.</p>';
+                                    });
+                            }, 500);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Error updating meter card UI:', err);
+            }
         }
     </script>
 
@@ -440,6 +599,8 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Function to load history content into a container
             const loadHistory = (container) => {
+                if (!container) return;
+                
                 const url = container.dataset.url;
                 if (!url) return;
 
@@ -459,7 +620,11 @@
 
             // Find all history containers and load their initial content
             const historyContainers = document.querySelectorAll('.history-container');
-            historyContainers.forEach(loadHistory);
+            if (historyContainers && historyContainers.length > 0) {
+                historyContainers.forEach(container => {
+                    if (container) loadHistory(container);
+                });
+            }
 
             // Use event delegation to handle clicks on pagination links
             document.body.addEventListener('click', function (event) {
@@ -478,19 +643,7 @@
                 }
             });
 
-            // Also handle tab switching for mobile view to load history only when it becomes visible
-            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
-                tab.addEventListener('shown.bs.tab', event => {
-                    const targetPane = document.querySelector(event.target.dataset.bsTarget);
-                    if (targetPane) {
-                        const container = targetPane.querySelector('.history-container');
-                        // Load history only if it hasn't been loaded yet (i.e., it still has a spinner)
-                        if (container && container.querySelector('.spinner-border')) {
-                            loadHistory(container);
-                        }
-                    }
-                });
-            });
+            // Removed tab-specific logic since we're not using tabs in mobile view anymore
         });
     </script>
 
