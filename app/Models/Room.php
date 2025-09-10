@@ -79,38 +79,53 @@ class Room extends Model
         if ($this->meters->isEmpty()) {
             return ['text' => 'No Meters', 'class' => 'info', 'icon' => 'help-hexagon'];
         }
-
-        // Find the most recent reading date from any of the room's meters
-        $latestReadingDate = null;
-        foreach ($this->meters as $meter) {
-            $latestForThisMeter = $meter->meterReadings()->latest('reading_date')->first();
-            if ($latestForThisMeter) {
-                $currentDate = Carbon::parse($latestForThisMeter->reading_date);
-                if (!$latestReadingDate || $currentDate->gt($latestReadingDate)) {
-                    $latestReadingDate = $currentDate;
+        
+        $now = Carbon::now();
+        $allMetersRecorded = true;
+        $oldestReadingDate = null;
+        $hasOverdueReading = false;
+        
+        // Check each active meter to see if ANY of them need a reading
+        foreach ($this->activeMeters as $meter) {
+            $latestReading = $meter->meterReadings()->latest('reading_date')->first();
+            
+            // If this meter has no readings at all
+            if (!$latestReading) {
+                // This meter needs a reading
+                $allMetersRecorded = false;
+                break;
+            }
+            
+            $readingDate = Carbon::parse($latestReading->reading_date);
+            
+            // Track the oldest reading date
+            if (!$oldestReadingDate || $readingDate->lt($oldestReadingDate)) {
+                $oldestReadingDate = $readingDate;
+            }
+            
+            // If this reading was not done in the current month
+            if (!$readingDate->isSameMonth($now)) {
+                $allMetersRecorded = false;
+                
+                // Check if it's more than a month old (overdue)
+                if ($readingDate->lt($now->copy()->subMonth()->startOfMonth())) {
+                    $hasOverdueReading = true;
                 }
             }
         }
-
-        // If there are no readings at all for any meter
-        if (!$latestReadingDate) {
-            return ['text' => 'Needs Reading', 'class' => 'warning', 'icon' => 'clock-hour-4'];
-        }
-
-        $now = Carbon::now();
-
-        // Check if the reading was done in the current month
-        if ($latestReadingDate->isSameMonth($now, 'year')) {
-            return ['text' => 'Recorded', 'class' => 'success', 'icon' => 'check'];
-        }
-
-        // Check if the reading is more than a month old
-        if ($latestReadingDate->lt($now->copy()->subMonth()->startOfMonth())) {
-            $monthsOverdue = $latestReadingDate->diffInMonths($now);
+        
+        // If any active meter is overdue, show the overdue status
+        if ($hasOverdueReading && $oldestReadingDate) {
+            $monthsOverdue = $oldestReadingDate->diffInMonths($now);
             return ['text' => "{$monthsOverdue} Month(s) Overdue", 'class' => 'danger', 'icon' => 'alert-triangle'];
         }
-
-        // Default to "Needs Reading" for last month's reading
+        
+        // If all meters have readings from the current month
+        if ($allMetersRecorded) {
+            return ['text' => 'Recorded', 'class' => 'success', 'icon' => 'check'];
+        }
+        
+        // Default to "Needs Reading" if any meter needs a current month reading
         return ['text' => 'Needs Reading', 'class' => 'warning', 'icon' => 'clock-hour-4'];
     }
 

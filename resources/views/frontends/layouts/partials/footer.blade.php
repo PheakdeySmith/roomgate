@@ -38,8 +38,7 @@
             <div class="spacer-large"></div>
             <div class="footer_info">
                 <div class="text-size-tiny">
-                    © Copyright 2025  by <a href="" target="_blank"
-                        class="text-size-tiny">RoomGate</a>
+                    <script>document.write(new Date().getFullYear())</script> © RoomGate
                 </div>
                 <div class="footer_socials">
                     <a href="#" class="social-link w-inline-block">
