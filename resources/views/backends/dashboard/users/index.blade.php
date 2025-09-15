@@ -25,7 +25,7 @@
             </div>
             <div class="text-end">
                 <ol class="breadcrumb m-0 py-0">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Boron</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
                     <li class="breadcrumb-item active">Users Tables</li>
                 </ol>
             </div>
@@ -37,11 +37,11 @@
                     <div class="card-header border-bottom border-dashed">
                         <div class="d-flex flex-wrap justify-content-between gap-2">
                             <h4 class="header-title">Users Data</h4>
-                            @if (Auth::check() && (Auth::user()->hasRole('admin') || Auth::user()->hasRole('landlord')))
+                            {{-- @if (Auth::check() && (Auth::user()->hasRole('admin') || Auth::user()->hasRole('landlord')))
                                 <a class="btn btn-primary" data-bs-toggle="modal" href="#createModal" role="button">
                                     <i class="ti ti-plus me-1"></i>Add User
                                 </a>
-                            @endif
+                            @endif --}}
                         </div>
                     </div>
                     <div class="card-body">
@@ -76,13 +76,13 @@
                     $destroyUrl = '';
                     $editUrl = '';
                     $viewUrl = ''; // This will be the user-specific view URL
-        
+
                     $userName = $user->name ?? 'N/A';
                     $userImage =
                         $user->image && is_string($user->image)
                             ? asset($user->image)
                             : asset('assets/images/default_image.png');
-        
+
                     if (auth()->check()) {
                         if (auth()->user()->hasRole('admin')) {
                             if ($user->hasRole('landlord')) {
@@ -98,7 +98,7 @@
                             }
                         }
                     }
-        
+
                     return [
                         $key + 1, // 0. Sequential Number (S.N.)
                         $userImage, // 1. Image URL
@@ -227,17 +227,17 @@
                         // Get user view URL (or fallback to contract URL for landlords)
                         const viewUrl = actionData?.user_view_url || '';
                         const actualUserId = actionData?.actual_user_id || '';
-                        
+
                         let viewButtonHtml = '';
-                        
+
                         // Check if user is landlord and looking at tenants
                         const isLandlordViewingTenant = {{ Auth::user()->hasRole('landlord') ? 'true' : 'false' }};
-                        
+
                         if (isLandlordViewingTenant) {
                             // For landlords, find the first contract of the tenant
                             viewButtonHtml = `
-                                <a href="/landlord/find-tenant-contract/${actualUserId}" 
-                                   class="btn btn-soft-primary btn-icon btn-sm rounded-circle" 
+                                <a href="/landlord/find-tenant-contract/${actualUserId}"
+                                   class="btn btn-soft-primary btn-icon btn-sm rounded-circle"
                                    title="View Tenant Contract">
                                     <i class="ti ti-eye"></i>
                                 </a>
@@ -245,14 +245,14 @@
                         } else {
                             // For admins, use the regular user view URL
                             viewButtonHtml = `
-                                <a href="${viewUrl}" 
-                                   class="btn btn-soft-primary btn-icon btn-sm rounded-circle" 
+                                <a href="${viewUrl}"
+                                   class="btn btn-soft-primary btn-icon btn-sm rounded-circle"
                                    title="View User Details">
                                     <i class="ti ti-eye"></i>
                                 </a>
                             `;
                         }
-                        
+
                         return gridjs.html(`
                 <div class="hstack gap-1 justify-content-end">
                     ${viewButtonHtml}
