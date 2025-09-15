@@ -293,8 +293,7 @@
                                                 </a>
                                                 <button type="button"
                                                     class="btn btn-soft-info btn-icon btn-sm rounded-circle print-invoice-btn"
-                                                    title="Print Invoice"
-                                                    data-invoice-id="{{ $invoice->id }}"
+                                                    title="Print Invoice" data-invoice-id="{{ $invoice->id }}"
                                                     data-invoice-number="{{ $invoice->invoice_number }}"
                                                     data-issue-date="{{ $invoice->issue_date->format('d M Y') }}"
                                                     data-due-date="{{ $invoice->due_date->format('d M Y') }}"
@@ -527,7 +526,7 @@
                                 <td class="pe-3">
                                     <div class="hstack gap-1 justify-content-end">
                                         <a href="${viewUrl}" class="btn btn-soft-primary btn-icon btn-sm rounded-circle" title="View Invoice"><i class="ti ti-eye"></i></a>
-                                        <button type="button" class="btn btn-soft-info btn-icon btn-sm rounded-circle print-invoice-btn" 
+                                        <button type="button" class="btn btn-soft-info btn-icon btn-sm rounded-circle print-invoice-btn"
                                             title="Print Invoice"
                                             data-invoice-id="${invoice.id}"
                                             data-invoice-number="${invoice.invoice_number}"
@@ -632,7 +631,7 @@
                 function printInvoice(button) {
                     // Extract invoice ID from button attributes
                     const invoiceId = button.getAttribute('data-invoice-id');
-                    
+
                     // Show loading indicator
                     Swal.fire({
                         title: 'Generating Invoice',
@@ -644,110 +643,125 @@
                     });
 
                     // Fetch invoice details using our new endpoint
-                    fetch(`{{ route('landlord.payments.getInvoiceDetails', ['invoice' => ':invoiceId']) }}`.replace(':invoiceId', invoiceId), {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json',
-                        }
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Close loading indicator
-                        Swal.close();
-                        
-                        // Extract data from the response
-                        const invoice = data.invoice;
-                        const tenant = data.tenant;
-                        const property = data.property;
-                        const room = data.room;
-                        const lineItems = data.line_items;
-                        
-                        // Generate and print the invoice
-                        generateInvoicePrint(
-                            invoice.invoice_number,
-                            invoice.issue_date,
-                            invoice.due_date,
-                            tenant.name,
-                            room.room_number,
-                            invoice.total_amount,
-                            lineItems
-                        );
-                    })
-                    .catch(error => {
-                        // Close loading indicator and show error
-                        Swal.close();
-                        console.error('Error fetching invoice details:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Could not fetch invoice details. Please try again.'
+                    fetch(`{{ route('landlord.payments.getInvoiceDetails', ['invoice' => ':invoiceId']) }}`.replace(
+                            ':invoiceId', invoiceId), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Close loading indicator
+                            Swal.close();
+
+                            // Extract data from the response
+                            const invoice = data.invoice;
+                            const tenant = data.tenant;
+                            const property = data.property;
+                            const room = data.room;
+                            const lineItems = data.line_items;
+
+                            // Generate and print the invoice
+                            generateInvoicePrint(
+                                invoice.invoice_number,
+                                invoice.issue_date,
+                                invoice.due_date,
+                                tenant.name,
+                                room.room_number,
+                                invoice.total_amount,
+                                lineItems
+                            );
+                        })
+                        .catch(error => {
+                            // Close loading indicator and show error
+                            Swal.close();
+                            console.error('Error fetching invoice details:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Could not fetch invoice details. Please try again.'
+                            });
                         });
-                    });
                 }
 
                 /**
                  * Generate and print the invoice
                  */
-                async function generateInvoicePrint(invoiceNumber, issueDate, dueDate, tenantName, roomNumber, totalAmount, lineItems) {
+                async function generateInvoicePrint(invoiceNumber, issueDate, dueDate, tenantName, roomNumber,
+                    totalAmount, lineItems) {
                     // Image assets
                     const logoUrl = "{{ asset('assets/images/logo-dark.png') }}";
-                    
+
                     // Check QR codes availability
                     const hasQrCode1 = {{ Auth::user()->qr_code_1 ? 'true' : 'false' }};
                     const hasQrCode2 = {{ Auth::user()->qr_code_2 ? 'true' : 'false' }};
-                    const qrCode1Url = hasQrCode1 ? "{{ Auth::user()->qr_code_1 ? asset('uploads/qrcodes/' . Auth::user()->qr_code_1) : '' }}" : "";
-                    const qrCode2Url = hasQrCode2 ? "{{ Auth::user()->qr_code_2 ? asset('uploads/qrcodes/' . Auth::user()->qr_code_2) : '' }}" : "";
+                    const qrCode1Url = hasQrCode1 ?
+                        "{{ Auth::user()->qr_code_1 ? asset('uploads/qrcodes/' . Auth::user()->qr_code_1) : '' }}" :
+                        "";
+                    const qrCode2Url = hasQrCode2 ?
+                        "{{ Auth::user()->qr_code_2 ? asset('uploads/qrcodes/' . Auth::user()->qr_code_2) : '' }}" :
+                        "";
 
                     // Format dates
-                    const formattedIssueDate = new Date(issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-                    const formattedDueDate = new Date(dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-                    
+                    const formattedIssueDate = new Date(issueDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    const formattedDueDate = new Date(dueDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+
                     // Get the currency symbol from user preferences
                     const currencySymbol = '{{ auth()->user()->currency_code ?: "$" }}';
-                    
+
                     // Generate items HTML
                     let itemsHtml = '';
                     let subtotal = 0;
                     let discount = 0;
                     let amountsToFormat = [];
-                    
+
                     if (lineItems && lineItems.length > 0) {
                         lineItems.forEach((item, index) => {
                             const itemAmount = parseFloat(item.amount);
-                            
+
                             // Check if it's a discount line item
                             if (item.description.toLowerCase().includes('discount')) {
                                 discount += Math.abs(itemAmount);
                                 return; // Skip this iteration
                             }
-                            
+
                             subtotal += itemAmount;
                             amountsToFormat.push(itemAmount); // Add amount to our formatting array
-                            
+
                             let detailHtml = item.description;
-                            
+
                             // Check for additional details from lineable
                             let subDescription = '';
                             if (item.lineable && item.lineable.consumption) {
                                 const rateApplied = parseFloat(item.lineable.rate_applied);
                                 amountsToFormat.push(rateApplied); // Add rate to our formatting array
-                                subDescription = `Consumption: ${item.lineable.consumption} units × Rate: [RATE_${amountsToFormat.length-1}]/unit`;
+                                subDescription =
+                                    `Consumption: ${item.lineable.consumption} units × Rate: [RATE_${amountsToFormat.length-1}]/unit`;
                             } else if (item.lineable && item.lineable.amount) {
                                 const lineableAmount = parseFloat(item.lineable.amount);
                                 amountsToFormat.push(lineableAmount); // Add amount to our formatting array
                                 subDescription = `Amount: [AMOUNT_${amountsToFormat.length-1}]`;
                             }
-                            
+
                             if (subDescription) {
                                 detailHtml = `<h6 class="mb-0">${item.description}</h6>
                                              <p class="text-muted mb-0 small">${subDescription}</p>`;
                             }
-                            
+
                             itemsHtml += `
                             <tr>
                                 <th scope="row">${String(index + 1).padStart(2, '0')}</th>
@@ -761,7 +775,7 @@
                         // If no items, just show the total as one item
                         subtotal = parseFloat(totalAmount);
                         amountsToFormat.push(subtotal);
-                        
+
                         itemsHtml = `
                         <tr>
                             <th scope="row">01</th>
@@ -771,25 +785,25 @@
                             <td class="text-end">[AMOUNT_0]</td>
                         </tr>`;
                     }
-                    
+
                     // Add subtotal, discount and total to formatting array
                     amountsToFormat.push(subtotal);
                     amountsToFormat.push(discount);
                     amountsToFormat.push(subtotal - discount);
-                    
+
                     // Get formatted amounts from the server
                     try {
                         const formattedAmounts = await formatMoneyBatch(amountsToFormat);
-                        
+
                         // Replace placeholders with formatted amounts
                         let updatedItemsHtml = itemsHtml;
-                        
+
                         // Replace all [AMOUNT_x] placeholders
                         for (let i = 0; i < lineItems.length; i++) {
                             const regex = new RegExp(`\\[AMOUNT_${i}\\]`, 'g');
                             updatedItemsHtml = updatedItemsHtml.replace(regex, formattedAmounts[i]);
                         }
-                        
+
                         // Replace all [RATE_x] and [AMOUNT_x] in the descriptions
                         for (let i = lineItems.length; i < formattedAmounts.length - 3; i++) {
                             const rateRegex = new RegExp(`\\[RATE_${i}\\]`, 'g');
@@ -797,34 +811,34 @@
                             updatedItemsHtml = updatedItemsHtml.replace(rateRegex, formattedAmounts[i]);
                             updatedItemsHtml = updatedItemsHtml.replace(amountRegex, formattedAmounts[i]);
                         }
-                        
+
                         const formattedSubtotal = formattedAmounts[formattedAmounts.length - 3];
                         const formattedDiscount = formattedAmounts[formattedAmounts.length - 2];
                         const formattedTotal = formattedAmounts[formattedAmounts.length - 1];
-                        
+
                         generateInvoiceHTML(updatedItemsHtml, formattedSubtotal, formattedDiscount, formattedTotal);
-                        
+
                     } catch (error) {
                         console.error('Error formatting amounts:', error);
-                        
+
                         // Fallback to client-side formatting
                         itemsHtml = itemsHtml.replace(/\[AMOUNT_\d+\]/g, (match) => {
                             const index = parseInt(match.match(/\d+/)[0]);
                             return `${currencySymbol}${amountsToFormat[index].toFixed(2)}`;
                         });
-                        
+
                         itemsHtml = itemsHtml.replace(/\[RATE_\d+\]/g, (match) => {
                             const index = parseInt(match.match(/\d+/)[0]);
                             return `${currencySymbol}${amountsToFormat[index].toFixed(2)}`;
                         });
-                        
+
                         const subtotalText = `${currencySymbol}${subtotal.toFixed(2)}`;
                         const discountText = `-${currencySymbol}${discount.toFixed(2)}`;
                         const totalText = `${currencySymbol}${(subtotal - discount).toFixed(2)}`;
-                        
+
                         generateInvoiceHTML(itemsHtml, subtotalText, discountText, totalText);
                     }
-                    
+
                     function generateInvoiceHTML(itemsHtml, subtotalText, discountText, totalText) {
                         // Create the invoice HTML
                         const invoiceHtml = `
@@ -866,22 +880,22 @@
                             </div>
                         </body>
                         </html>`;
-                        
-                        // Create iframe to print
-                        const iframe = document.createElement('iframe');
-                        iframe.style.display = 'none';
-                        document.body.appendChild(iframe);
-                        iframe.contentDocument.write(invoiceHtml);
-                        iframe.contentDocument.close();
-                        
-                        iframe.onload = function() {
+
+                        const printWindow = window.open('', '_blank');
+
+                        // 2. Write the invoice HTML into the new tab.
+                        printWindow.document.write(invoiceHtml);
+                        printWindow.document.close();
+
+                        // 3. Wait for the content to load, then trigger the print dialog.
+                        printWindow.onload = function() {
                             setTimeout(function() {
-                                iframe.contentWindow.print();
-                                // Remove iframe after printing or after a timeout
+                                printWindow.print();
+                                // Close the tab after the print dialog is handled.
                                 setTimeout(function() {
-                                    document.body.removeChild(iframe);
-                                }, 1000);
-                            }, 500);
+                                    printWindow.close();
+                                }, 500);
+                            }, 500); // A small delay ensures images and styles render properly.
                         };
                     }
                 }
