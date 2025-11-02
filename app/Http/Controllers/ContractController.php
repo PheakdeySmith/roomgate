@@ -7,6 +7,10 @@ use App\Models\Room;
 use App\Models\User;
 use App\Models\BasePrice;
 use App\Models\Contract;
+use App\Services\Contract\ContractService;
+use App\Services\Room\RoomService;
+use App\Services\Tenant\TenantService;
+use App\Services\Notification\NotificationService;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,6 +24,22 @@ use Illuminate\Support\Facades\Hash;
 
 class ContractController extends Controller
 {
+    protected ContractService $contractService;
+    protected RoomService $roomService;
+    protected TenantService $tenantService;
+    protected NotificationService $notificationService;
+
+    public function __construct(
+        ContractService $contractService,
+        RoomService $roomService,
+        TenantService $tenantService,
+        NotificationService $notificationService
+    ) {
+        $this->contractService = $contractService;
+        $this->roomService = $roomService;
+        $this->tenantService = $tenantService;
+        $this->notificationService = $notificationService;
+    }
     public function index(Request $request)
     {
         $currentUser = Auth::user();
@@ -28,30 +48,19 @@ class ContractController extends Controller
             return redirect()->route('unauthorized');
         }
 
-        $contractsQuery = Contract::whereHas('room.property', function ($query) use ($currentUser) {
-            $query->where('landlord_id', $currentUser->id);
-        })->with(['room.property', 'tenant']);
-        
-        // Filter by tenant_id if provided (for direct linking from users list)
-        if ($request->has('tenant_id')) {
-            $contractsQuery->where('user_id', $request->tenant_id); // Using user_id instead of tenant_id
-        }
-        
-        $contracts = $contractsQuery->latest()->get();
+        // Use service to get contracts with filters
+        $filters = $request->all();
+        $filters['paginate'] = true;
+        $filters['per_page'] = $request->per_page ?? 15;
+        $contracts = $this->contractService->getLandlordContracts($currentUser, $filters);
 
-        $availableRooms = Room::whereHas('property', function ($query) use ($currentUser) {
-            $query->where('landlord_id', $currentUser->id);
-        })
-            ->where('status', Room::STATUS_AVAILABLE)
-            ->with('property')
-            ->get();
+        // Use room service to get available rooms
+        $availableRooms = $this->roomService->getLandlordAvailableRooms($currentUser);
 
-        $allRooms = Room::whereHas('property', function ($query) use ($currentUser) {
-            $query->where('landlord_id', $currentUser->id);
-        })
-            ->with('property')
-            ->get();
+        // Get all rooms for the landlord
+        $allRooms = $this->roomService->getLandlordRooms($currentUser);
 
+        // Get tenants
         $tenants = User::role('tenant')->where('landlord_id', $currentUser->id)->get();
 
         return view('backends.dashboard.contracts.index', compact(
@@ -64,15 +73,18 @@ class ContractController extends Controller
 
     public function show(Contract $contract)
     {
-        // --- Authorization ---
+        // Authorization
         if ($contract->room->property->landlord_id !== Auth::id()) {
             abort(403);
         }
 
-        // --- Eager-load core relationships ---
-        $contract->load(['tenant', 'room.property', 'room.amenities']);
+        // Use service to get contract details with statistics
+        $contractDetails = $this->contractService->getContractDetails($contract);
 
-        // --- Fetch paginated histories for the tabs ---
+        // Get tenant documents using service
+        $tenantDocuments = $this->tenantService->getTenantDocuments($contract->tenant);
+
+        // Paginated histories
         $invoices = $contract->invoices()
             ->latest('issue_date')
             ->paginate(10, ['*'], 'invoices_page');
@@ -81,56 +93,25 @@ class ContractController extends Controller
             ->with('utilityType')
             ->latest('billing_period_end')
             ->paginate(10, ['*'], 'usage_page');
-            
-        // --- Fetch tenant documents ---
-        $tenantDocuments = \App\Models\Document::where('user_id', $contract->user_id)
-            ->latest()
-            ->get();
 
-        // --- Calculate Stats ---
-        // If rent_amount is null, get the base price from the room type
-        if ($contract->rent_amount === null) {
-            // Get the latest base price for the room's type and property
-            $basePrice = BasePrice::where('property_id', $contract->room->property_id)
-                ->where('room_type_id', $contract->room->room_type_id)
-                ->orderBy('effective_date', 'desc')
-                ->first();
-                
-            $rentAmount = $basePrice ? $basePrice->price : 0;
-        } else {
-            $rentAmount = $contract->rent_amount;
-        }
-        
-        // Get amenities assigned directly to the room
-        $roomAmenities = $contract->room->amenities;
-
-        // Calculate total monthly rent
-        $totalMonthlyRent = (float) $rentAmount + $roomAmenities->sum('amenity_price');
-        
-        $totalBilled = $contract->invoices()->sum('total_amount');
-        $totalPaid = $contract->invoices()->sum('paid_amount');
-        $currentBalance = $totalBilled - $totalPaid;
-        $daysRemaining = max(0, intval(now()->diffInDays($contract->end_date, false)));
-
-        return view('backends.dashboard.contracts.show', compact(
-            'contract',
-            'invoices',
-            'utilityHistory',
-            'totalMonthlyRent',
-            'currentBalance',
-            'daysRemaining',
-            'rentAmount',
-            'tenantDocuments'
-        ));
+        return view('backends.dashboard.contracts.show', [
+            'contract' => $contract,
+            'invoices' => $invoices,
+            'utilityHistory' => $utilityHistory,
+            'totalMonthlyRent' => $contractDetails['total_monthly_rent'],
+            'currentBalance' => $contractDetails['current_balance'],
+            'daysRemaining' => $contractDetails['days_remaining'],
+            'rentAmount' => $contractDetails['rent_amount'],
+            'tenantDocuments' => $tenantDocuments,
+        ]);
     }
 
     public function create()
     {
         $currentUser = Auth::user();
-        // Get all rooms that belong to the landlord and are currently available
-        $availableRooms = Room::whereHas('property', function ($query) use ($currentUser) {
-            $query->where('landlord_id', $currentUser->id);
-        })->where('status', 'available')->get();
+
+        // Use room service to get available rooms
+        $availableRooms = $this->roomService->getLandlordAvailableRooms($currentUser);
 
         return view('backends.dashboard.contracts.create', compact('availableRooms'));
     }
@@ -168,9 +149,8 @@ class ContractController extends Controller
             'contract_image' => 'nullable|image|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
-        DB::beginTransaction();
-
         try {
+            // Handle file uploads
             $imageDbPath = null;
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
@@ -205,39 +185,24 @@ class ContractController extends Controller
                 $contractImageDbPath = $relativeDbPath;
             }
 
-            $user = User::create([
-                'name' => $validatedData['name'],
-                'email' => $validatedData['email'],
-                'phone' => $validatedData['phone'],
-                'password' => Hash::make($validatedData['password']),
-                'image' => $imageDbPath,
-                'landlord_id' => $currentUser->id,
-                'status' => 'active',
-            ]);
-            $user->assignRole('tenant');
+            // Prepare data for service
+            $validatedData['image'] = $imageDbPath;
+            $validatedData['contract_image'] = $contractImageDbPath;
 
-            Contract::create([
-                'user_id' => $user->id,
-                'room_id' => $validatedData['room_id'],
-                'landlord_id' => $currentUser->id,
-                'start_date' => $validatedData['start_date'],
-                'end_date' => $validatedData['end_date'],
-                'rent_amount' => $validatedData['rent_amount'],
-                'billing_cycle' => $validatedData['billing_cycle'],
-                'status' => 'active',
-                'contract_image' => $contractImageDbPath,
-            ]);
+            // Use service to create contract with new tenant
+            $contract = $this->contractService->createContractWithTenant($validatedData, $currentUser);
 
-            $room = Room::find($validatedData['room_id']);
-            $room->status = 'occupied';
-            $room->save();
+            // Send welcome notification
+            $this->notificationService->sendWelcomeTenantNotification(
+                $contract->tenant,
+                $contract,
+                ['email']
+            );
 
-            DB::commit();
+            return redirect()->route('landlord.contracts.index')
+                ->with('success', 'New tenant and contract created successfully.');
 
-            return redirect()->route('landlord.contracts.index')->with('success', 'New tenant and contract created successfully.');
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
+        } catch (\Exception $e) {
             Log::error('Failed to create new tenant and contract: ' . $e->getMessage());
             return back()->with('error', 'An unexpected error occurred. Please try again.')->withInput();
         }
@@ -280,22 +245,8 @@ class ContractController extends Controller
             'contract_image' => 'nullable|image|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
-        if ($validatedData['status'] === 'active') {
-            $conflictingContract = Contract::where('room_id', $validatedData['room_id'])
-                ->where('status', 'active')
-                ->where('id', '!=', $contract->id)
-                ->exists();
-
-            if ($conflictingContract) {
-                return back()->with('error', 'This room is already occupied by an active contract.');
-            }
-        }
-
-        DB::beginTransaction();
-
         try {
-
-
+            // Handle contract image upload
             if ($request->hasFile('contract_image')) {
                 if ($contract->contract_image && File::exists(public_path($contract->contract_image))) {
                     File::delete(public_path($contract->contract_image));
@@ -306,36 +257,12 @@ class ContractController extends Controller
                 $validatedData['contract_image'] = 'uploads/contracts/' . $filename;
             }
 
-            $originalRoomId = $contract->room_id;
-            $newRoomId = (int) $validatedData['room_id'];
+            // Use service to update contract
+            $updatedContract = $this->contractService->updateContract($contract, $validatedData);
 
-            $contract->update($validatedData);
-
-            if ($originalRoomId !== $newRoomId) {
-                $oldRoom = Room::find($originalRoomId);
-                if ($oldRoom) {
-                    $oldRoom->status = Room::STATUS_AVAILABLE;
-                    $oldRoom->save();
-                }
-            }
-
-            $newRoom = Room::find($newRoomId);
-            if ($newRoom) {
-                // Use the validated status for guaranteed accuracy
-                if ($validatedData['status'] === 'active') {
-                    $newRoom->status = Room::STATUS_OCCUPIED;
-                } else {
-                    // If contract is not active (expired/terminated), the room becomes available
-                    $newRoom->status = Room::STATUS_AVAILABLE;
-                }
-                $newRoom->save();
-            }
-
-            DB::commit();
             return back()->with('success', 'Contract and Room status updated successfully.');
 
-        } catch (\Throwable $e) {
-            DB::rollBack();
+        } catch (\Exception $e) {
             Log::error('Contract update failed for contract ID ' . $contract->id . ': ' . $e->getMessage());
             return back()->with('error', 'An unexpected error occurred. Could not update the contract.')->withInput();
         }
@@ -374,38 +301,28 @@ class ContractController extends Controller
 
     public function destroy(Contract $contract)
     {
-        // --- Authorization (Your existing check is good) ---
         $currentUser = Auth::user();
         if (!$currentUser->hasRole('landlord') || $contract->room->property->landlord_id !== $currentUser->id) {
             return back()->with('error', 'Unauthorized action.');
         }
 
-        // --- ✨ NEW: Check for existing invoices before deleting ---
+        // Check for existing invoices before deleting
         if ($contract->invoices()->exists()) {
             return back()->with('error', 'Contracts with existing invoices cannot be deleted.');
         }
 
-        // --- Your existing deletion logic is good ---
-        DB::beginTransaction();
         try {
+            // Delete contract image if exists
             if ($contract->contract_image && File::exists(public_path($contract->contract_image))) {
                 File::delete(public_path($contract->contract_image));
             }
 
-            $room = $contract->room;
-            if ($room) {
-                $room->status = Room::STATUS_AVAILABLE;
-                $room->save();
-            }
-
-            $contract->delete();
-
-            DB::commit();
+            // Use service to terminate/delete contract
+            $this->contractService->terminateContract($contract, true);
 
             return redirect()->route('landlord.contracts.index')->with('success', 'Contract has been deleted successfully.');
 
-        } catch (\Throwable $e) {
-            DB::rollBack();
+        } catch (\Exception $e) {
             Log::error('Contract deletion failed for contract ID ' . $contract->id . ': ' . $e->getMessage());
             return back()->with('error', 'An error occurred while trying to delete the contract.');
         }

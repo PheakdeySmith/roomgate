@@ -13,9 +13,10 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RoleSeeder::class,
-            UserSeeder::class,
-            SubscriptionPlanSeeder::class,
+            // UserSeeder::class, // Commented out as ComprehensiveSeeder creates users
+            // SubscriptionPlanSeeder::class, // Commented out as ComprehensiveSeeder creates plans
             PageContentSeeder::class,
+            ComprehensiveSeeder::class, // New comprehensive seeder with all data
         ]);
     }
 }

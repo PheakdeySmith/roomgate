@@ -10,6 +10,8 @@ use App\Models\Property;
 use App\Models\RoomType;
 use App\Models\BasePrice;
 use App\Models\UtilityType;
+use App\Services\Property\PropertyService;
+use App\Services\Room\RoomService;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,20 +22,27 @@ use Illuminate\Support\Facades\File;
 
 class PropertyController extends Controller
 {
+    protected PropertyService $propertyService;
+    protected RoomService $roomService;
+
+    public function __construct(PropertyService $propertyService, RoomService $roomService)
+    {
+        $this->propertyService = $propertyService;
+        $this->roomService = $roomService;
+    }
     public function index(Request $request)
     {
         $currentUser = Auth::user();
-        $propertiesQuery = Property::query();
 
-        if ($currentUser->hasRole('landlord')) {
-            $properties = $propertiesQuery
-                ->with('roomTypes')
-                ->where('landlord_id', $currentUser->id)
-                ->latest()
-                ->get();
-        } else {
+        if (!$currentUser->hasRole('landlord')) {
             return redirect()->route('unauthorized');
         }
+
+        // Use service to get properties
+        $filters = $request->all();
+        $filters['paginate'] = true;
+        $filters['per_page'] = $request->per_page ?? 15;
+        $properties = $this->propertyService->getLandlordProperties($currentUser, $filters);
 
         $utilityTypes = UtilityType::latest()->get();
 
@@ -47,24 +56,24 @@ class PropertyController extends Controller
             abort(403, 'Unauthorized Action');
         }
 
+        // Use service to get detailed property data
         $property->load([
-        'rooms' => function ($query) {
-            $query->with([
-                'activeContract.tenant',
-                'activeMeters.utilityType',
-                'activeMeters.meterReadings' => function ($subQuery) {
-                    $subQuery->latest('reading_date')->limit(12);
-                },
-                'allMeters.utilityType'
-            ])->orderBy('room_number', 'asc');
-        },
-    ]);
-    $utilityTypes = UtilityType::all();
+            'rooms' => function ($query) {
+                $query->with([
+                    'activeContract.tenant',
+                    'activeMeters.utilityType',
+                    'activeMeters.meterReadings' => function ($subQuery) {
+                        $subQuery->latest('reading_date')->limit(12);
+                    },
+                    'allMeters.utilityType'
+                ])->orderBy('room_number', 'asc');
+            },
+        ]);
 
-        $rooms = Room::where('property_id', $property->id)
-            ->with('roomType', 'amenities')
-            ->latest()
-            ->paginate(10);
+        $utilityTypes = UtilityType::all();
+
+        // Use room service for room data
+        $rooms = $this->roomService->getPropertyRooms($property);
 
         $basePrices = BasePrice::where('property_id', $property->id)
             ->get()
@@ -77,11 +86,7 @@ class PropertyController extends Controller
 
         $tenants = User::role('tenant')->where('landlord_id', $currentUser->id)->get();
 
-        $allRooms = Room::whereHas('property', function ($query) use ($currentUser) {
-            $query->where('landlord_id', $currentUser->id);
-        })
-            ->with('property')
-            ->get();
+        $allRooms = $this->roomService->getLandlordRooms($currentUser);
 
         return view('backends.dashboard.properties.show', [
             'property' => $property,
@@ -101,12 +106,12 @@ class PropertyController extends Controller
         if (!$currentUser || !$currentUser->hasRole('landlord')) {
             return redirect()->route('unauthorized');
         }
-        
+
         // Check subscription limits for properties
         if ($currentUser->hasReachedPropertyLimit()) {
             $subscription = $currentUser->activeSubscription();
             $limit = $subscription ? $subscription->subscriptionPlan->properties_limit : 0;
-            
+
             return back()->with('error', "You have reached the maximum number of properties ($limit) allowed in your subscription plan. Please upgrade your plan to add more properties.")
                   ->withInput();
         }
@@ -127,50 +132,28 @@ class PropertyController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
+            // Handle image upload
             $imageDbPath = null;
-
             if ($request->hasFile('cover_image')) {
                 $file = $request->file('cover_image');
                 $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
                 $extension = $file->getClientOriginalExtension();
-
                 $filename = time() . '_' . Str::slug($originalName) . '.' . $extension;
                 $destinationPath = public_path('uploads/property-photos');
-
                 File::makeDirectory($destinationPath, 0755, true, true);
-
                 $file->move($destinationPath, $filename);
-
                 $imageDbPath = 'uploads/property-photos/' . $filename;
             }
 
-            Property::create([
-                'landlord_id' => $currentUser->id,
-                'name' => $validatedData['name'],
-                'property_type' => $validatedData['property_type'],
-                'description' => $validatedData['description'],
-                'address_line_1' => $validatedData['address_line_1'],
-                'address_line_2' => $validatedData['address_line_2'] ?? null,
-                'city' => $validatedData['city'],
-                'state_province' => $validatedData['state_province'],
-                'postal_code' => $validatedData['postal_code'],
-                'country' => $validatedData['country'],
-                'year_built' => $validatedData['year_built'] ?? null,
-                'status' => $validatedData['status'],
-                'cover_image' => $imageDbPath,
-            ]);
+            $validatedData['cover_image'] = $imageDbPath;
 
-            DB::commit();
+            // Use service to create property
+            $property = $this->propertyService->createProperty($validatedData, $currentUser);
 
             return back()->with('success', 'Property created successfully.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-
             Log::error('Property creation failed: ' . $e->getMessage());
-
             return back()->with('error', 'An unexpected error occurred. Could not create the property.')->withInput();
         }
     }
@@ -296,8 +279,6 @@ class PropertyController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
             // Handle image update
             if ($request->hasFile('cover_image')) {
                 // Delete old image
@@ -316,13 +297,11 @@ class PropertyController extends Controller
                 $validatedData['cover_image'] = 'uploads/property-photos/' . $filename;
             }
 
-            $property->update($validatedData);
-
-            DB::commit();
+            // Use service to update property
+            $this->propertyService->updateProperty($property, $validatedData);
 
             return back()->with('success', 'Property updated successfully.');
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Property update failed: ' . $e->getMessage());
             return back()->with('error', 'An unexpected error occurred during property update.')->withInput();
         }
@@ -332,24 +311,23 @@ class PropertyController extends Controller
     {
         $currentUser = Auth::user();
 
-        $canDelete = false;
-
-        if ($currentUser->hasRole('landlord')) {
-            if ($property->landlord_id === $currentUser->id) {
-                $canDelete = true;
-            }
-        }
-
-        if (!$canDelete) {
+        if (!$currentUser->hasRole('landlord') || $property->landlord_id !== $currentUser->id) {
             return redirect()->route('unauthorized');
         }
 
-        if ($property->cover_image && File::exists(public_path($property->cover_image))) {
-            File::delete(public_path($property->cover_image));
+        try {
+            // Delete cover image if exists
+            if ($property->cover_image && File::exists(public_path($property->cover_image))) {
+                File::delete(public_path($property->cover_image));
+            }
+
+            // Use service to delete property
+            $this->propertyService->deleteProperty($property);
+
+            return back()->with('success', 'Property deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Property deletion failed: ' . $e->getMessage());
+            return back()->with('error', 'An error occurred while deleting the property.');
         }
-
-        $property->delete();
-
-        return back()->with('success', value: 'Property deleted successfully.');
     }
 }
