@@ -10,7 +10,9 @@
       "Bash(php artisan make:migration:*)",
       "Bash(composer show:*)",
       "Bash(composer update:*)",
-      "Bash(php artisan route:list:*)"
+      "Bash(php artisan route:list:*)",
+      "Bash(echo:*)",
+      "Bash(lsb_release:*)"
     ],
     "deny": [],
     "ask": []
